@@ -59,6 +59,8 @@ import {HtlcRedeemed} from "./HtlcRedeemed";
 import {HtlcRefund} from "./HtlcRefund";
 import {TicketCreate} from "./TicketCreate";
 import {LiquidityPoolExchange} from "./LiquidityPoolExchange";
+import {LiquidityPoolDeposit} from "./LiquidityPoolDeposit";
+import {LiquidityPoolWithdraw} from "./LiquidityPoolWithdraw";
 import {LimitOrderUpdate} from "./LimitOrderUpdate";
 
 export default function opComponents(opType, props, opts) {
@@ -241,6 +243,12 @@ export default function opComponents(opType, props, opts) {
 
         case "ticket_create":
             return <TicketCreate {...props} {...opts} />;
+
+        case "liquidity_pool_deposit":
+            return <LiquidityPoolDeposit {...props} {...opts} />;
+
+        case "liquidity_pool_withdraw":
+            return <LiquidityPoolWithdraw {...props} {...opts} />;
 
         case "liquidity_pool_exchange":
             return <LiquidityPoolExchange {...props} {...opts} />;

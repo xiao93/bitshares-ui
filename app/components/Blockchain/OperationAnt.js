@@ -11,9 +11,13 @@ import {ChainTypes as grapheneChainTypes, ChainStore} from "bitsharesjs";
 import {
     buildOperationNames,
     describeLimitOrderUpdate,
-    liquidityPoolExchangeSummary
+    liquidityPoolDepositSummary,
+    liquidityPoolExchangeSummary,
+    liquidityPoolWithdrawSummary
 } from "common/operationNames";
 import {LimitOrderUpdate} from "./operations/LimitOrderUpdate";
+import {LiquidityPoolDeposit} from "./operations/LiquidityPoolDeposit";
+import {LiquidityPoolWithdraw} from "./operations/LiquidityPoolWithdraw";
 import account_constants from "chain/account_constants";
 import MemoText from "./MemoText";
 import ProposedOperation from "./ProposedOperation";
@@ -1585,6 +1589,36 @@ class Operation {
                 );
 
                 break;
+            case "liquidity_pool_deposit": {
+                if (!liquidityPoolDepositSummary(op, result)) {
+                    column = (
+                        <span>
+                            <Link to={`/block/${block}`}>#{block}</Link>
+                        </span>
+                    );
+                    break;
+                }
+                color = "success";
+                column = (
+                    <LiquidityPoolDeposit op={op} result={result} />
+                );
+                break;
+            }
+            case "liquidity_pool_withdraw": {
+                if (!liquidityPoolWithdrawSummary(op, result)) {
+                    column = (
+                        <span>
+                            <Link to={`/block/${block}`}>#{block}</Link>
+                        </span>
+                    );
+                    break;
+                }
+                color = "warning";
+                column = (
+                    <LiquidityPoolWithdraw op={op} result={result} />
+                );
+                break;
+            }
             case "liquidity_pool_exchange": {
                 const summary = liquidityPoolExchangeSummary(op, result);
                 if (!summary) {

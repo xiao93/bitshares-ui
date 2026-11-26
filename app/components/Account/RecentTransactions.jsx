@@ -403,6 +403,8 @@ class RecentTransactions extends React.Component {
                 "limit_order_create",
                 "limit_order_cancel",
                 "limit_order_update",
+                "liquidity_pool_deposit",
+                "liquidity_pool_withdraw",
                 "fill_order",
                 "account_create",
                 "account_update",

@@ -20,7 +20,10 @@ import ProposedOperation from "./ProposedOperation";
 import {ChainTypes} from "bitsharesjs";
 import {
     buildOperationNames,
+    LIQUIDITY_POOL_DEPOSIT_ID,
+    liquidityPoolDepositRows,
     liquidityPoolExchangeRows,
+    liquidityPoolWithdrawRows,
     limitOrderUpdateRows
 } from "common/operationNames";
 let {operations} = ChainTypes;
@@ -109,7 +112,9 @@ class OperationTable extends React.Component {
                     <Translate component="span" content="transfer.fee" />
                 </td>
                 <td>
-                    {operation[1].fee.amount > 0 ? (
+                    {operation[1] &&
+                    operation[1].fee &&
+                    operation[1].fee.amount > 0 ? (
                         <span>
                             <FormattedAsset
                                 color="fee"
@@ -158,6 +163,32 @@ class OperationTable extends React.Component {
             </div>
         );
     }
+}
+
+function pushDescribedRows(rows, described, linkToAccount) {
+    described.forEach(row => {
+        let value;
+        if (row.kind === "account") {
+            value = linkToAccount(row.value);
+        } else if (row.kind === "amount") {
+            value = (
+                <FormattedAsset
+                    amount={row.value.amount}
+                    asset={row.value.asset_id}
+                />
+            );
+        } else {
+            value = <span>{row.value}</span>;
+        }
+        rows.push(
+            <tr key={rows.length}>
+                <td>
+                    <Translate component="span" content={row.label} />
+                </td>
+                <td>{value}</td>
+            </tr>
+        );
+    });
 }
 
 class Transaction extends React.Component {
@@ -2383,6 +2414,40 @@ class Transaction extends React.Component {
                     );
 
                     break;
+                case "liquidity_pool_deposit":
+                case "liquidity_pool_withdraw": {
+                    const poolResult =
+                        trx.operation_results &&
+                        trx.operation_results[opIndex];
+                    const poolRows =
+                        op[0] === LIQUIDITY_POOL_DEPOSIT_ID
+                            ? liquidityPoolDepositRows(op, poolResult)
+                            : liquidityPoolWithdrawRows(op, poolResult);
+                    if (!poolRows) {
+                        rows.push(
+                            <tr key={key++}>
+                                <td>
+                                    <Translate
+                                        component="span"
+                                        content="explorer.block.op"
+                                    />
+                                </td>
+                                <td>
+                                    <Inspector data={op} search={false} />
+                                </td>
+                            </tr>
+                        );
+                        break;
+                    }
+                    color =
+                        op[0] === LIQUIDITY_POOL_DEPOSIT_ID
+                            ? "success"
+                            : "warning";
+                    pushDescribedRows(rows, poolRows, value =>
+                        this.linkToAccount(value)
+                    );
+                    break;
+                }
                 case "liquidity_pool_exchange": {
                     const exchangeRows = liquidityPoolExchangeRows(
                         op,
