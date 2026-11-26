@@ -2,13 +2,14 @@ import React from "react";
 import ChainTypes from "../Utility/ChainTypes";
 import BindToChainState from "../Utility/BindToChainState";
 import {ChainTypes as GraphChainTypes, ChainStore} from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 import counterpart from "counterpart";
 import utils from "common/utils";
 import Notify from "notifyjs";
 let {operations} = GraphChainTypes;
 import PropTypes from "prop-types";
 
-let OPERATIONS = Object.keys(operations);
+let OPERATIONS = buildOperationNames(Object.keys(operations));
 
 class BrowserNotifications extends React.Component {
     static propTypes = {

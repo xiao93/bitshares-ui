@@ -58,6 +58,7 @@ import {HtlcRedeem} from "./HtlcRedeem";
 import {HtlcRedeemed} from "./HtlcRedeemed";
 import {HtlcRefund} from "./HtlcRefund";
 import {TicketCreate} from "./TicketCreate";
+import {LiquidityPoolExchange} from "./LiquidityPoolExchange";
 
 export default function opComponents(opType, props, opts) {
     switch (opType) {
@@ -239,6 +240,9 @@ export default function opComponents(opType, props, opts) {
 
         case "ticket_create":
             return <TicketCreate {...props} {...opts} />;
+
+        case "liquidity_pool_exchange":
+            return <LiquidityPoolExchange {...props} {...opts} />;
 
         default:
             return <DefaultOperation {...props} />;

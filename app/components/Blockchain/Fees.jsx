@@ -9,9 +9,10 @@ import BindToChainState from "../Utility/BindToChainState";
 import FormattedAsset from "../Utility/FormattedAsset";
 import {EquivalentValueComponent} from "../Utility/EquivalentValueComponent";
 import {ChainStore, ChainTypes as grapheneChainTypes} from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 import {Card} from "bitshares-ui-style-guide";
 const {operations} = grapheneChainTypes;
-let ops = Object.keys(operations);
+let ops = buildOperationNames(Object.keys(operations));
 
 // Define groups and their corresponding operation ids
 let fee_grouping = {

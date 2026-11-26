@@ -18,6 +18,10 @@ import PrivateKeyStore from "stores/PrivateKeyStore";
 import WalletUnlockActions from "actions/WalletUnlockActions";
 import ProposedOperation from "./ProposedOperation";
 import {ChainTypes} from "bitsharesjs";
+import {
+    buildOperationNames,
+    liquidityPoolExchangeRows
+} from "common/operationNames";
 let {operations} = ChainTypes;
 import ReactTooltip from "react-tooltip";
 import moment from "moment";
@@ -30,7 +34,7 @@ import sanitize from "sanitize";
 require("./operations.scss");
 require("./json-inspector.scss");
 
-let ops = Object.keys(operations);
+let ops = buildOperationNames(Object.keys(operations));
 let listings = Object.keys(account_constants.account_listing);
 
 const TranslateBoolean = ({value, ...otherProps}) => (
@@ -2378,6 +2382,69 @@ class Transaction extends React.Component {
                     );
 
                     break;
+                case "liquidity_pool_exchange": {
+                    const exchangeRows = liquidityPoolExchangeRows(
+                        op,
+                        trx.operation_results && trx.operation_results[opIndex]
+                    );
+                    if (!exchangeRows) {
+                        rows.push(
+                            <tr key={key++}>
+                                <td>
+                                    <Translate
+                                        component="span"
+                                        content="explorer.block.op"
+                                    />
+                                </td>
+                                <td>
+                                    <Inspector data={op} search={false} />
+                                </td>
+                            </tr>
+                        );
+                        break;
+                    }
+
+                    color = "success";
+                    exchangeRows.forEach(row => {
+                        let value;
+                        if (row.kind === "account") {
+                            value = this.linkToAccount(row.value);
+                        } else if (row.kind === "amount") {
+                            value = (
+                                <FormattedAsset
+                                    amount={row.value.amount}
+                                    asset={row.value.asset_id}
+                                />
+                            );
+                        } else if (row.kind === "price") {
+                            value = (
+                                <FormattedPrice
+                                    base_asset={row.base.asset_id}
+                                    quote_asset={row.quote.asset_id}
+                                    base_amount={row.base.amount}
+                                    quote_amount={row.quote.amount}
+                                    noPopOver
+                                />
+                            );
+                        } else {
+                            value = <span>{row.value}</span>;
+                        }
+
+                        rows.push(
+                            <tr key={key++}>
+                                <td>
+                                    <Translate
+                                        component="span"
+                                        content={row.label}
+                                    />
+                                </td>
+                                <td>{value}</td>
+                            </tr>
+                        );
+                    });
+
+                    break;
+                }
                 default:
                     console.log("unimplemented tx op:", op);
 
