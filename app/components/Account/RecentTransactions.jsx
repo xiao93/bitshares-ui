@@ -10,7 +10,7 @@ import {
     FetchChain,
     ChainStore
 } from "bitsharesjs";
-import {buildOperationNames} from "common/operationNames";
+import {buildOperationNames, operationTypeId} from "common/operationNames";
 //import ps from "perfect-scrollbar";
 import counterpart from "counterpart";
 import Icon from "../Icon/Icon";
@@ -227,7 +227,7 @@ class RecentTransactions extends React.Component {
         }
         if (filterOp) {
             history = history.filter(a => {
-                return a.op[0] === operations[filterOp];
+                return a.op[0] === operationTypeId(filterOp, operations);
             });
         }
 
@@ -402,6 +402,7 @@ class RecentTransactions extends React.Component {
                 "transfer",
                 "limit_order_create",
                 "limit_order_cancel",
+                "limit_order_update",
                 "fill_order",
                 "account_create",
                 "account_update",

@@ -10,8 +10,10 @@ import TranslateWithLinks from "../Utility/TranslateWithLinks";
 import {ChainTypes as grapheneChainTypes, ChainStore} from "bitsharesjs";
 import {
     buildOperationNames,
+    describeLimitOrderUpdate,
     liquidityPoolExchangeSummary
 } from "common/operationNames";
+import {LimitOrderUpdate} from "./operations/LimitOrderUpdate";
 import account_constants from "chain/account_constants";
 import MemoText from "./MemoText";
 import ProposedOperation from "./ProposedOperation";
@@ -1622,6 +1624,19 @@ class Operation {
                         />
                     </span>
                 );
+                break;
+            }
+            case "limit_order_update": {
+                if (!describeLimitOrderUpdate(op)) {
+                    column = (
+                        <span>
+                            <Link to={`/block/${block}`}>#{block}</Link>
+                        </span>
+                    );
+                    break;
+                }
+                color = "warning";
+                column = <LimitOrderUpdate op={op} />;
                 break;
             }
             default:

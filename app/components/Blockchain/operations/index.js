@@ -59,6 +59,7 @@ import {HtlcRedeemed} from "./HtlcRedeemed";
 import {HtlcRefund} from "./HtlcRefund";
 import {TicketCreate} from "./TicketCreate";
 import {LiquidityPoolExchange} from "./LiquidityPoolExchange";
+import {LimitOrderUpdate} from "./LimitOrderUpdate";
 
 export default function opComponents(opType, props, opts) {
     switch (opType) {
@@ -243,6 +244,9 @@ export default function opComponents(opType, props, opts) {
 
         case "liquidity_pool_exchange":
             return <LiquidityPoolExchange {...props} {...opts} />;
+
+        case "limit_order_update":
+            return <LimitOrderUpdate {...props} {...opts} />;
 
         default:
             return <DefaultOperation {...props} />;
