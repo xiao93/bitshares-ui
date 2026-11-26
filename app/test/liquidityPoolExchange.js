@@ -96,12 +96,15 @@ function testNameMapping() {
     base.push("ticket_update");
 
     const names = buildOperationNames(base);
-    assert.strictEqual(names.length, 64);
+    assert.strictEqual(names.length, 78);
     assert.strictEqual(names[0], "op_0");
     assert.strictEqual(names[57], "op_57");
     assert.strictEqual(names[58], "ticket_update");
     assert.strictEqual(names[59], undefined);
     assert.strictEqual(names[63], "liquidity_pool_exchange");
+    assert.strictEqual(names[64], undefined);
+    assert.strictEqual(names[76], undefined);
+    assert.strictEqual(names[77], "limit_order_update");
     assert.strictEqual(LIQUIDITY_POOL_EXCHANGE_ID, 63);
 
     const alreadyNamed = ["transfer"];

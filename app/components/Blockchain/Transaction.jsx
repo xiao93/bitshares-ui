@@ -20,7 +20,8 @@ import ProposedOperation from "./ProposedOperation";
 import {ChainTypes} from "bitsharesjs";
 import {
     buildOperationNames,
-    liquidityPoolExchangeRows
+    liquidityPoolExchangeRows,
+    limitOrderUpdateRows
 } from "common/operationNames";
 let {operations} = ChainTypes;
 import ReactTooltip from "react-tooltip";
@@ -2443,6 +2444,102 @@ class Transaction extends React.Component {
                         );
                     });
 
+                    break;
+                }
+                case "limit_order_update": {
+                    const updateRows = limitOrderUpdateRows(op);
+                    if (!updateRows) {
+                        rows.push(
+                            <tr key={key++}>
+                                <td>
+                                    <Translate
+                                        component="span"
+                                        content="explorer.block.op"
+                                    />
+                                </td>
+                                <td>
+                                    <Inspector data={op} search={false} />
+                                </td>
+                            </tr>
+                        );
+                        break;
+                    }
+
+                    color = "warning";
+                    updateRows.forEach(row => {
+                        let value;
+                        if (row.kind === "account") {
+                            value = this.linkToAccount(row.value);
+                        } else if (row.kind === "amount") {
+                            value = (
+                                <FormattedAsset
+                                    amount={row.value.amount}
+                                    asset={row.value.asset_id}
+                                />
+                            );
+                        } else if (row.kind === "price") {
+                            value = (
+                                <FormattedPrice
+                                    base_asset={row.base.asset_id}
+                                    quote_asset={row.quote.asset_id}
+                                    base_amount={row.base.amount}
+                                    quote_amount={row.quote.amount}
+                                    noPopOver
+                                />
+                            );
+                        } else if (row.kind === "on_fill_clear") {
+                            value = (
+                                <Translate
+                                    component="span"
+                                    content="operation.limit_order_update_on_fill_clear"
+                                />
+                            );
+                        } else if (row.kind === "on_fill") {
+                            const action = row.value;
+                            value = action.known ? (
+                                <Translate
+                                    component="span"
+                                    content="operation.limit_order_update_on_fill_detail"
+                                    spread={action.spread || ""}
+                                    size={action.size || ""}
+                                    seconds={
+                                        action.expirationSeconds != null
+                                            ? action.expirationSeconds
+                                            : ""
+                                    }
+                                    repeat={
+                                        action.repeat == null
+                                            ? ""
+                                            : counterpart.translate(
+                                                  action.repeat
+                                                      ? "operation.limit_order_update_repeats"
+                                                      : "operation.limit_order_update_once"
+                                              )
+                                    }
+                                />
+                            ) : (
+                                <Translate
+                                    component="span"
+                                    content="operation.limit_order_update_on_fill_unknown"
+                                    type={action.typeIndex}
+                                />
+                            );
+                        } else {
+                            value = <span>{row.value}</span>;
+                        }
+
+                        rows.push(
+                            <tr key={key++}>
+                                <td>
+                                    <Translate
+                                        component="span"
+                                        content={row.label}
+                                    />
+                                </td>
+                                <td>{value}</td>
+                            </tr>
+                        );
+                    });
                     break;
                 }
                 default:
