@@ -18,9 +18,11 @@ let ops = buildOperationNames(Object.keys(operations));
 let fee_grouping = {
     general: [0, 25, 26, 27, 28, 32, 33, 37, 39, 41, 49, 50, 52],
     asset: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 38, 43, 44, 47, 48],
-    market: [1, 2, 3, 4, 45, 46, 61, 62, 77],
+    market: [1, 2, 3, 4, 45, 46, 59, 60, 61, 62, 63, 75, 77],
     account: [5, 6, 7, 8, 9],
-    business: [20, 21, 22, 23, 24, 29, 30, 31, 34, 35, 36]
+    business: [20, 21, 22, 23, 24, 29, 30, 31, 34, 35, 36],
+    // SameT funds and credit offers. 74 is virtual and has no fee parameters.
+    lending: [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 76]
 };
 
 // Operations that require LTM

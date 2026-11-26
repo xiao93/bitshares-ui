@@ -18,6 +18,11 @@ import {
 import {LimitOrderUpdate} from "./operations/LimitOrderUpdate";
 import {LiquidityPoolDeposit} from "./operations/LiquidityPoolDeposit";
 import {LiquidityPoolWithdraw} from "./operations/LiquidityPoolWithdraw";
+import {DescribedOperation} from "./operations/DescribedOperation";
+import {
+    historyOperationSummary,
+    isHistoryOperation
+} from "common/operationDetails";
 import account_constants from "chain/account_constants";
 import MemoText from "./MemoText";
 import ProposedOperation from "./ProposedOperation";
@@ -61,6 +66,22 @@ class Operation {
             color = "info";
         let memoComponent = null;
 
+        if (op && isHistoryOperation(op[0])) {
+            const described = historyOperationSummary(op, result);
+            if (!described) {
+                column = (
+                    <span>
+                        <Link to={`/block/${block}`}>#{block}</Link>
+                    </span>
+                );
+            } else {
+                color = described.color || "info";
+                column = <DescribedOperation view={described} />;
+            }
+            return {column, color};
+        }
+
+        try {
         switch (
             ops[op[0]] // For a list of trx types, see chain_types.coffee
         ) {
@@ -1680,6 +1701,14 @@ class Operation {
                         <Link to={`/block/${block}`}>#{block}</Link>
                     </span>
                 );
+        }
+        } catch (error) {
+            console.error(error);
+            column = (
+                <span>
+                    <Link to={`/block/${block}`}>#{block}</Link>
+                </span>
+            );
         }
         return {column, color};
     }

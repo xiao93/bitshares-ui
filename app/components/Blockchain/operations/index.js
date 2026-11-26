@@ -62,8 +62,13 @@ import {LiquidityPoolExchange} from "./LiquidityPoolExchange";
 import {LiquidityPoolDeposit} from "./LiquidityPoolDeposit";
 import {LiquidityPoolWithdraw} from "./LiquidityPoolWithdraw";
 import {LimitOrderUpdate} from "./LimitOrderUpdate";
+import {DescribedOperation} from "./DescribedOperation";
+import {isHistoryOperation} from "common/operationDetails";
 
 export default function opComponents(opType, props, opts) {
+    if (props && props.op && isHistoryOperation(props.op[0])) {
+        return <DescribedOperation {...props} {...opts} />;
+    }
     switch (opType) {
         case "transfer":
             return <Transfer {...props} {...opts} />;

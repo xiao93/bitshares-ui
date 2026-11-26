@@ -5,10 +5,28 @@
  * and the page dumps the raw operation. Names are filled in by id, which keeps
  * 0..58 stable and does not depend on key insertion order.
  *
+ * 59 liquidity_pool_create
+ * 60 liquidity_pool_delete
  * 61 liquidity_pool_deposit
  * 62 liquidity_pool_withdraw
  * 63 liquidity_pool_exchange
+ * 64 samet_fund_create
+ * 65 samet_fund_delete
+ * 66 samet_fund_update
+ * 67 samet_fund_borrow
+ * 68 samet_fund_repay
+ * 69 credit_offer_create
+ * 70 credit_offer_delete
+ * 71 credit_offer_update
+ * 72 credit_offer_accept
+ * 73 credit_deal_repay
+ * 74 credit_deal_expired
+ * 75 liquidity_pool_update
+ * 76 credit_deal_update
  * 77 limit_order_update
+ *
+ * Ids 0..58 stay on the bitsharesjs ChainTypes list. Filling the holes above
+ * does not move 61, 62, 63, or 77.
  */
 
 export const LIQUIDITY_POOL_DEPOSIT_ID = 61;
@@ -16,9 +34,24 @@ export const LIQUIDITY_POOL_WITHDRAW_ID = 62;
 export const LIQUIDITY_POOL_EXCHANGE_ID = 63;
 
 const OPERATION_NAMES_BY_ID = {
+    59: "liquidity_pool_create",
+    60: "liquidity_pool_delete",
     61: "liquidity_pool_deposit",
     62: "liquidity_pool_withdraw",
     63: "liquidity_pool_exchange",
+    64: "samet_fund_create",
+    65: "samet_fund_delete",
+    66: "samet_fund_update",
+    67: "samet_fund_borrow",
+    68: "samet_fund_repay",
+    69: "credit_offer_create",
+    70: "credit_offer_delete",
+    71: "credit_offer_update",
+    72: "credit_offer_accept",
+    73: "credit_deal_repay",
+    74: "credit_deal_expired",
+    75: "liquidity_pool_update",
+    76: "credit_deal_update",
     77: "limit_order_update"
 };
 
@@ -473,12 +506,10 @@ export function liquidityPoolWithdrawRows(op, result) {
  */
 export const LIMIT_ORDER_UPDATE_ID = 77;
 
-const OPERATION_IDS_BY_NAME = {
-    liquidity_pool_deposit: LIQUIDITY_POOL_DEPOSIT_ID,
-    liquidity_pool_withdraw: LIQUIDITY_POOL_WITHDRAW_ID,
-    liquidity_pool_exchange: LIQUIDITY_POOL_EXCHANGE_ID,
-    limit_order_update: LIMIT_ORDER_UPDATE_ID
-};
+const OPERATION_IDS_BY_NAME = {};
+Object.keys(OPERATION_NAMES_BY_ID).forEach(key => {
+    OPERATION_IDS_BY_NAME[OPERATION_NAMES_BY_ID[key]] = parseInt(key, 10);
+});
 
 const GRAPHENE_PERCENT = 100;
 

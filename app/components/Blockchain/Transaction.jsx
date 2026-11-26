@@ -26,6 +26,10 @@ import {
     liquidityPoolWithdrawRows,
     limitOrderUpdateRows
 } from "common/operationNames";
+import {
+    blockOperationRows,
+    isBlockOperation
+} from "common/operationDetails";
 let {operations} = ChainTypes;
 import ReactTooltip from "react-tooltip";
 import moment from "moment";
@@ -170,11 +174,33 @@ function pushDescribedRows(rows, described, linkToAccount) {
         let value;
         if (row.kind === "account") {
             value = linkToAccount(row.value);
-        } else if (row.kind === "amount") {
+        } else if (row.kind === "amount" && row.value) {
             value = (
                 <FormattedAsset
                     amount={row.value.amount}
                     asset={row.value.asset_id}
+                />
+            );
+        } else if (row.kind === "asset") {
+            value = <LinkToAssetById asset={row.value} />;
+        } else if (row.kind === "price" && row.base && row.quote) {
+            value = (
+                <FormattedPrice
+                    base_asset={row.base.asset_id}
+                    quote_asset={row.quote.asset_id}
+                    base_amount={row.base.amount}
+                    quote_amount={row.quote.amount}
+                    noPopOver
+                />
+            );
+        } else if (row.kind === "bool") {
+            value = <TranslateBoolean value={!!row.value} />;
+        } else if (row.kind === "translate") {
+            value = (
+                <Translate
+                    component="span"
+                    content={row.content}
+                    {...(row.params || {})}
                 />
             );
         } else {
@@ -243,7 +269,36 @@ class Transaction extends React.Component {
             let key = 0;
 
             let color = "";
-            switch (
+            try {
+            const describedBlock = isBlockOperation(op[0])
+                ? blockOperationRows(op)
+                : null;
+            if (isBlockOperation(op[0])) {
+                color = (describedBlock && describedBlock.color) || "info";
+                if (
+                    !describedBlock ||
+                    !describedBlock.rows ||
+                    !describedBlock.rows.length
+                ) {
+                    rows.push(
+                        <tr key={key++}>
+                            <td>
+                                <Translate
+                                    component="span"
+                                    content="explorer.block.op"
+                                />
+                            </td>
+                            <td>
+                                <Inspector data={op} search={false} />
+                            </td>
+                        </tr>
+                    );
+                } else {
+                    pushDescribedRows(rows, describedBlock.rows, value =>
+                        this.linkToAccount(value)
+                    );
+                }
+            } else switch (
                 ops[op[0]] // For a list of trx types, see chain_types.coffee
             ) {
                 case "transfer":
@@ -1702,41 +1757,6 @@ class Transaction extends React.Component {
                     );
                     break;
 
-                case "blind_transfer":
-                    rows.push(
-                        <tr key={key++}>
-                            <td>
-                                <Translate
-                                    component="span"
-                                    content="transaction.inputs"
-                                />
-                            </td>
-                            <td>
-                                <Inspector
-                                    data={op[1].inputs[0]}
-                                    search={false}
-                                />
-                            </td>
-                        </tr>
-                    );
-                    rows.push(
-                        <tr key={key++}>
-                            <td>
-                                <Translate
-                                    component="span"
-                                    content="transaction.outputs"
-                                />
-                            </td>
-                            <td>
-                                <Inspector
-                                    data={op[1].outputs[0]}
-                                    search={false}
-                                />
-                            </td>
-                        </tr>
-                    );
-                    break;
-
                 case "proposal_create":
                     var expiration_date = new Date(op[1].expiration_time + "Z");
                     var has_review_period =
@@ -2624,6 +2644,22 @@ class Transaction extends React.Component {
                         </tr>
                     );
                     break;
+            }
+            } catch (error) {
+                console.error(error);
+                rows.push(
+                    <tr key={key++}>
+                        <td>
+                            <Translate
+                                component="span"
+                                content="explorer.block.op"
+                            />
+                        </td>
+                        <td>
+                            <Inspector data={op} search={false} />
+                        </td>
+                    </tr>
+                );
             }
 
             info.push(

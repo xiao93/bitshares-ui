@@ -100,10 +100,10 @@ function testNameMapping() {
     assert.strictEqual(names[0], "op_0");
     assert.strictEqual(names[57], "op_57");
     assert.strictEqual(names[58], "ticket_update");
-    assert.strictEqual(names[59], undefined);
+    assert.strictEqual(names[59], "liquidity_pool_create");
     assert.strictEqual(names[63], "liquidity_pool_exchange");
-    assert.strictEqual(names[64], undefined);
-    assert.strictEqual(names[76], undefined);
+    assert.strictEqual(names[64], "samet_fund_create");
+    assert.strictEqual(names[76], "credit_deal_update");
     assert.strictEqual(names[77], "limit_order_update");
     assert.strictEqual(LIQUIDITY_POOL_EXCHANGE_ID, 63);
 
