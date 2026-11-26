@@ -28,7 +28,8 @@ import {
 } from "common/operationNames";
 import {
     blockOperationRows,
-    isBlockOperation
+    isBlockOperation,
+    localizeDescribedOperation
 } from "common/operationDetails";
 let {operations} = ChainTypes;
 import ReactTooltip from "react-tooltip";
@@ -270,9 +271,10 @@ class Transaction extends React.Component {
 
             let color = "";
             try {
-            const describedBlock = isBlockOperation(op[0])
-                ? blockOperationRows(op)
-                : null;
+            const describedBlock = localizeDescribedOperation(
+                isBlockOperation(op[0]) ? blockOperationRows(op) : null,
+                (localeKey, params) => counterpart.translate(localeKey, params)
+            );
             if (isBlockOperation(op[0])) {
                 color = (describedBlock && describedBlock.color) || "info";
                 if (

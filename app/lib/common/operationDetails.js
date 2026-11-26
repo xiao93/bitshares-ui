@@ -440,12 +440,182 @@ function feeRateClause(value) {
     return clause("operation.fee_rate", [], {rate});
 }
 
-function durationClause(value, stringKey) {
+const DURATION_UNITS = [
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+    ["second", 1]
+];
+
+const DURATION_UNIT_KEYS = {
+    day: {
+        one: "operation.duration.day_one",
+        other: "operation.duration.day_other"
+    },
+    hour: {
+        one: "operation.duration.hour_one",
+        other: "operation.duration.hour_other"
+    },
+    minute: {
+        one: "operation.duration.minute_one",
+        other: "operation.duration.minute_other"
+    },
+    second: {
+        one: "operation.duration.second_one",
+        other: "operation.duration.second_other"
+    }
+};
+
+function readableDuration(value) {
     const seconds = readSmallInt(value);
     if (seconds == null || seconds < 0) {
         return null;
     }
-    return clause(stringKey, [], {seconds: String(seconds)});
+    return seconds;
+}
+
+function takeDurationUnit(seconds, size) {
+    let count = Math.floor(seconds / size);
+    let remainder = seconds - count * size;
+    if (remainder < 0) {
+        count -= 1;
+        remainder += size;
+    } else if (remainder >= size) {
+        count += 1;
+        remainder -= size;
+    }
+    return [count, remainder];
+}
+
+function splitDuration(seconds) {
+    if (!Number.isInteger(seconds) || seconds < 0) {
+        return null;
+    }
+    if (seconds === 0) {
+        return [{unit: "second", count: 0}];
+    }
+    const parts = [];
+    let remaining = seconds;
+    for (let index = 0; index < DURATION_UNITS.length; index += 1) {
+        const unit = DURATION_UNITS[index][0];
+        const size = DURATION_UNITS[index][1];
+        if (remaining < size) {
+            continue;
+        }
+        const taken = takeDurationUnit(remaining, size);
+        if (taken[0] > 0) {
+            parts.push({unit: unit, count: taken[0]});
+            remaining = taken[1];
+        }
+    }
+    return parts.length ? parts : [{unit: "second", count: 0}];
+}
+
+export function formatDuration(seconds, translate) {
+    const parts = splitDuration(seconds);
+    if (!parts || typeof translate !== "function") {
+        return null;
+    }
+    const text = [];
+    for (let index = 0; index < parts.length; index += 1) {
+        const part = parts[index];
+        const forms = DURATION_UNIT_KEYS[part.unit];
+        const key = part.count === 1 ? forms.one : forms.other;
+        const rendered = translate(key, {count: String(part.count)});
+        if (typeof rendered !== "string" || !rendered) {
+            return null;
+        }
+        text.push(rendered);
+    }
+    return text.join(" ");
+}
+
+function durationClause(value, stringKey) {
+    const seconds = readableDuration(value);
+    if (seconds == null) {
+        return null;
+    }
+    return clause(stringKey, [], {durationSeconds: seconds});
+}
+
+function durationRow(label, value) {
+    const seconds = readableDuration(value);
+    if (seconds == null) {
+        return null;
+    }
+    return {label, kind: "duration", value: seconds};
+}
+
+function localizeClause(item, translate) {
+    if (!item || !item.params || item.params.durationSeconds == null) {
+        return item;
+    }
+    const duration = formatDuration(item.params.durationSeconds, translate);
+    if (!duration) {
+        return item;
+    }
+    const params = {};
+    Object.keys(item.params).forEach(key => {
+        if (key !== "durationSeconds") {
+            params[key] = item.params[key];
+        }
+    });
+    params.duration = duration;
+    return {stringKey: item.stringKey, keys: item.keys, params: params};
+}
+
+function localizeRow(row, translate) {
+    if (!row || row.kind !== "duration") {
+        return row;
+    }
+    const duration = formatDuration(row.value, translate);
+    if (!duration) {
+        return row;
+    }
+    return textRow(row.label, duration);
+}
+
+export function localizeDescribedOperation(described, translate) {
+    if (!described || typeof translate !== "function") {
+        return described;
+    }
+    let summary = described.summary;
+    let summaryChanged = false;
+    if (summary && summary.clauses && summary.clauses.length) {
+        const clauses = summary.clauses.map(item => {
+            const next = localizeClause(item, translate);
+            if (next !== item) {
+                summaryChanged = true;
+            }
+            return next;
+        });
+        if (summaryChanged) {
+            summary = {
+                stringKey: summary.stringKey,
+                keys: summary.keys,
+                params: summary.params,
+                clauses: clauses
+            };
+        }
+    }
+    let rows = described.rows;
+    let rowsChanged = false;
+    if (rows && rows.length) {
+        const nextRows = rows.map(row => {
+            const next = localizeRow(row, translate);
+            if (next !== row) {
+                rowsChanged = true;
+            }
+            return next;
+        });
+        if (rowsChanged) {
+            rows = nextRows;
+        }
+    }
+    if (!summaryChanged && !rowsChanged) {
+        return described;
+    }
+    return {color: described.color, summary: summary, rows: rows};
 }
 
 function stateClause(value, enabledKey, disabledKey) {
@@ -1049,10 +1219,10 @@ function creditOfferCommonRows(account, offerId, body, assetId) {
             )
         );
     }
-    const seconds = readSmallInt(body.max_duration_seconds);
-    if (seconds != null && seconds >= 0) {
-        rows.push(textRow("explorer.block.max_duration", String(seconds)));
-    }
+    pushOptional(
+        rows,
+        durationRow("explorer.block.max_duration", body.max_duration_seconds)
+    );
     const enabled = readBool(body.enabled);
     if (enabled != null) {
         rows.push(boolRow("explorer.block.enabled", enabled));
@@ -1199,10 +1369,10 @@ function parseCreditOfferAccept(body) {
     if (maxFee) {
         rows.push(textRow("explorer.block.max_fee_rate", maxFee));
     }
-    const seconds = readSmallInt(body.min_duration_seconds);
-    if (seconds != null && seconds >= 0) {
-        rows.push(textRow("explorer.block.min_duration", String(seconds)));
-    }
+    pushOptional(
+        rows,
+        durationRow("explorer.block.min_duration", body.min_duration_seconds)
+    );
     const repay = autoRepayClause(extensionAutoRepay(body));
     if (repay) {
         rows.push(

@@ -121,7 +121,9 @@ const details = loadModule("../lib/common/operationDetails.js", [
     "isBlockOperation",
     "describeRemainingOperation",
     "historyOperationSummary",
-    "blockOperationRows"
+    "blockOperationRows",
+    "formatDuration",
+    "localizeDescribedOperation"
 ]);
 
 const {
@@ -134,7 +136,9 @@ const {
     isBlockOperation,
     describeRemainingOperation,
     historyOperationSummary,
-    blockOperationRows
+    blockOperationRows,
+    formatDuration,
+    localizeDescribedOperation
 } = details;
 
 function asset(amount, id) {
@@ -716,6 +720,267 @@ function collectLocaleKeys() {
     return keys;
 }
 
+function localeTranslator(data) {
+    return (key, params) => {
+        const template = lookup(data, key);
+        assert.strictEqual(typeof template, "string", key);
+        return template.replace(/%\((\w+)\)s/g, (match, name) => {
+            assert.ok(
+                params && Object.prototype.hasOwnProperty.call(params, name),
+                key + " missing " + name
+            );
+            return String(params[name]);
+        });
+    };
+}
+
+function fillTemplate(template, params) {
+    return template.replace(/%\((\w+)\)s/g, (match, name) => {
+        assert.ok(
+            params && Object.prototype.hasOwnProperty.call(params, name),
+            template
+        );
+        return String(params[name]);
+    });
+}
+
+function loadLocale(locale) {
+    return JSON.parse(
+        fs.readFileSync(
+            path.join(__dirname, "../assets/locales/locale-" + locale + ".json"),
+            "utf8"
+        )
+    );
+}
+
+function testCreditDurations() {
+    const locales = {en: loadLocale("en"), zh: loadLocale("zh")};
+    const translators = {
+        en: localeTranslator(locales.en),
+        zh: localeTranslator(locales.zh)
+    };
+    const account = "1.2.17";
+    const bts = asset(100000, "1.3.0");
+    const usd = asset(LARGE, "1.3.121");
+    const cases = [
+        {seconds: 0, en: "0 seconds", zh: "0 秒"},
+        {seconds: 1, en: "1 second", zh: "1 秒"},
+        {seconds: 45, en: "45 seconds", zh: "45 秒"},
+        {seconds: 60, en: "1 minute", zh: "1 分钟"},
+        {seconds: 90, en: "1 minute 30 seconds", zh: "1 分钟 30 秒"},
+        {seconds: 120, en: "2 minutes", zh: "2 分钟"},
+        {seconds: 3600, en: "1 hour", zh: "1 小时"},
+        {seconds: 3660, en: "1 hour 1 minute", zh: "1 小时 1 分钟"},
+        {seconds: 3661, en: "1 hour 1 minute 1 second", zh: "1 小时 1 分钟 1 秒"},
+        {seconds: 7200, en: "2 hours", zh: "2 小时"},
+        {seconds: 86400, en: "1 day", zh: "1 天"},
+        {seconds: 90000, en: "1 day 1 hour", zh: "1 天 1 小时"},
+        {
+            seconds: 90061,
+            en: "1 day 1 hour 1 minute 1 second",
+            zh: "1 天 1 小时 1 分钟 1 秒"
+        },
+        {seconds: 172800, en: "2 days", zh: "2 天"},
+        {seconds: 2592000, en: "30 days", zh: "30 天"},
+        {seconds: "0", stored: 0, en: "0 seconds", zh: "0 秒"},
+        {seconds: "2592000", stored: 2592000, en: "30 days", zh: "30 天"},
+        {seconds: "90000", stored: 90000, en: "1 day 1 hour", zh: "1 天 1 小时"}
+    ];
+    const specs = [
+        {
+            id: 72,
+            field: "min_duration_seconds",
+            clauseKey: "operation.credit_min_duration",
+            rowLabel: "explorer.block.min_duration",
+            body: seconds => ({
+                borrower: account,
+                offer_id: "1.21.9",
+                borrow_amount: bts,
+                collateral: usd,
+                max_fee_rate: 2500,
+                min_duration_seconds: seconds
+            })
+        },
+        {
+            id: 69,
+            field: "max_duration_seconds",
+            clauseKey: "operation.credit_max_duration",
+            rowLabel: "explorer.block.max_duration",
+            body: seconds => ({
+                owner_account: account,
+                asset_type: "1.3.121",
+                balance: 1,
+                max_duration_seconds: seconds
+            })
+        },
+        {
+            id: 71,
+            field: "max_duration_seconds",
+            clauseKey: "operation.credit_max_duration",
+            rowLabel: "explorer.block.max_duration",
+            body: seconds => ({
+                owner_account: account,
+                offer_id: "1.21.9",
+                max_duration_seconds: seconds
+            })
+        }
+    ];
+
+    assert.strictEqual(formatDuration(0, null), null);
+    assert.strictEqual(formatDuration(-5, translators.en), null);
+    assert.strictEqual(formatDuration(1.5, translators.en), null);
+
+    assert.strictEqual(
+        locales.en.operation.credit_min_duration,
+        "minimum duration %(duration)s"
+    );
+    assert.strictEqual(
+        locales.en.operation.credit_max_duration,
+        "maximum duration %(duration)s"
+    );
+    assert.strictEqual(
+        locales.zh.operation.credit_min_duration,
+        "最短借款 %(duration)s"
+    );
+    assert.strictEqual(
+        locales.zh.operation.credit_max_duration,
+        "最长借款 %(duration)s"
+    );
+    assert.strictEqual(locales.en.explorer.block.min_duration, "Minimum duration");
+    assert.strictEqual(locales.en.explorer.block.max_duration, "Maximum duration");
+    assert.strictEqual(locales.zh.explorer.block.min_duration, "最短期限");
+    assert.strictEqual(locales.zh.explorer.block.max_duration, "最长期限");
+    ["credit_min_duration", "credit_max_duration"].forEach(name => {
+        assert.strictEqual(locales.en.operation[name].indexOf("seconds"), -1, name);
+        assert.strictEqual(locales.zh.operation[name].indexOf("秒"), -1, name);
+    });
+    ["min_duration", "max_duration"].forEach(name => {
+        assert.strictEqual(locales.en.explorer.block[name].indexOf("(s)"), -1, name);
+        assert.strictEqual(locales.zh.explorer.block[name].indexOf("秒"), -1, name);
+    });
+
+    specs.forEach(spec => {
+        cases.forEach(item => {
+            const stored = Object.prototype.hasOwnProperty.call(item, "stored")
+                ? item.stored
+                : item.seconds;
+            const operation = op(spec.id, spec.body(item.seconds));
+            const described = describeRemainingOperation(operation);
+            const history = historyOperationSummary(operation);
+            const block = blockOperationRows(operation);
+            assert.strictEqual(history.summary.stringKey, "operation." + CANONICAL[spec.id]);
+
+            const rawClause = history.summary.clauses.find(
+                clause => clause.stringKey === spec.clauseKey
+            );
+            assert.ok(rawClause, CANONICAL[spec.id] + " " + item.seconds);
+            assert.strictEqual(rawClause.params.durationSeconds, stored);
+            assert.strictEqual(rawClause.params.duration, undefined);
+
+            const rawRow = block.rows.find(row => row.label === spec.rowLabel);
+            assert.ok(rawRow, spec.rowLabel);
+            assert.strictEqual(rawRow.kind, "duration");
+            assert.strictEqual(rawRow.value, stored);
+            assert.strictEqual(
+                described.rows.find(row => row.label === spec.rowLabel).value,
+                stored
+            );
+
+            ["en", "zh"].forEach(locale => {
+                const localizedHistory = localizeDescribedOperation(
+                    history,
+                    translators[locale]
+                );
+                const localizedBlock = localizeDescribedOperation(
+                    block,
+                    translators[locale]
+                );
+                const clause = localizedHistory.summary.clauses.find(
+                    entry => entry.stringKey === spec.clauseKey
+                );
+                assert.strictEqual(clause.params.duration, item[locale]);
+                assert.strictEqual(clause.params.durationSeconds, undefined);
+                const clauseName = spec.clauseKey.split(".")[1];
+                assert.strictEqual(
+                    fillTemplate(locales[locale].operation[clauseName], clause.params),
+                    locales[locale].operation[clauseName].replace(
+                        "%(duration)s",
+                        item[locale]
+                    )
+                );
+                assert.strictEqual(
+                    fillTemplate(locales[locale].operation[clauseName], clause.params).indexOf(
+                        item[locale] + " 秒"
+                    ),
+                    -1
+                );
+                const row = localizedBlock.rows.find(
+                    entry => entry.label === spec.rowLabel
+                );
+                assert.strictEqual(row.kind, "text");
+                assert.strictEqual(row.value, item[locale]);
+                assert.strictEqual(
+                    formatDuration(stored, translators[locale]),
+                    item[locale]
+                );
+            });
+
+            assert.strictEqual(rawClause.params.durationSeconds, stored);
+            assert.strictEqual(rawRow.kind, "duration");
+            assert.strictEqual(rawRow.value, stored);
+        });
+
+        [null, -1, 1.5, "nope", ""].forEach(bad => {
+            const described = describeRemainingOperation(op(spec.id, spec.body(bad)));
+            assert.ok(described, CANONICAL[spec.id] + " still parses");
+            assert.ok(
+                !described.summary.clauses.some(
+                    clause => clause.stringKey === spec.clauseKey
+                ),
+                CANONICAL[spec.id] + " omitted " + bad
+            );
+            assert.ok(
+                !described.rows.some(row => row.label === spec.rowLabel),
+                CANONICAL[spec.id] + " omitted row " + bad
+            );
+        });
+    });
+
+    const accept = describeRemainingOperation(op(72, specs[0].body(2592000)));
+    const fee = accept.summary.clauses.find(
+        clause => clause.stringKey === "operation.credit_max_fee_rate"
+    );
+    assert.ok(fee && fee.params.rate);
+    const localizedFee = localizeDescribedOperation(
+        accept,
+        translators.en
+    ).summary.clauses.find(
+        clause => clause.stringKey === "operation.credit_max_fee_rate"
+    );
+    assert.strictEqual(localizedFee.params.rate, fee.params.rate);
+    const localizedDuration = localizeDescribedOperation(
+        accept,
+        translators.zh
+    ).summary.clauses.find(
+        clause => clause.stringKey === "operation.credit_min_duration"
+    );
+    assert.strictEqual(localizedDuration.params.duration, "30 天");
+    assert.strictEqual(
+        fillTemplate(
+            locales.zh.operation.credit_min_duration,
+            localizedDuration.params
+        ),
+        "最短借款 30 天"
+    );
+    assert.strictEqual(
+        fillTemplate(
+            locales.en.operation.credit_max_duration,
+            {duration: formatDuration(86400, translators.en)}
+        ),
+        "maximum duration 1 day"
+    );
+}
+
 function testLocales() {
     const keys = collectLocaleKeys();
     assert.ok(keys.size > 40);
@@ -848,6 +1113,7 @@ function testBabelParse() {
 
 testMapping();
 testParsers();
+testCreditDurations();
 testLocales();
 testBabelParse();
 console.log("operations 0-77 checks passed");

@@ -1,9 +1,20 @@
 import React from "react";
+import counterpart from "counterpart";
 import TranslateWithLinks from "../../Utility/TranslateWithLinks";
-import {historyOperationSummary} from "common/operationDetails";
+import {
+    historyOperationSummary,
+    localizeDescribedOperation
+} from "common/operationDetails";
+
+function translateDuration(key, params) {
+    return counterpart.translate(key, params);
+}
 
 export const DescribedOperation = ({op, view, changeColor}) => {
-    const resolved = view || historyOperationSummary(op);
+    const resolved = localizeDescribedOperation(
+        view || historyOperationSummary(op),
+        translateDuration
+    );
     if (!resolved || !resolved.summary) {
         return null;
     }
