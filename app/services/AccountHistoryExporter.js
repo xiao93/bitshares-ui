@@ -1,8 +1,9 @@
 import {saveAs} from "file-saver";
 import {ChainTypes as grapheneChainTypes, FetchChain} from "bitsharesjs";
 import report from "bitshares-report";
+import {buildOperationNames} from "common/operationNames";
 const {operations} = grapheneChainTypes;
-const ops = Object.keys(operations);
+const ops = buildOperationNames(Object.keys(operations));
 
 const FULL = "FULL";
 const COINBASE = "COINBASE";

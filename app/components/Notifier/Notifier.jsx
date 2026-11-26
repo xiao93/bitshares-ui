@@ -6,9 +6,10 @@ import Immutable from "immutable";
 import ChainTypes from "../Utility/ChainTypes";
 import BindToChainState from "../Utility/BindToChainState";
 import {ChainTypes as GraphChainTypes} from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 let {operations} = GraphChainTypes;
 
-let ops = Object.keys(operations);
+let ops = buildOperationNames(Object.keys(operations));
 
 class Notifier extends React.Component {
     static propTypes = {

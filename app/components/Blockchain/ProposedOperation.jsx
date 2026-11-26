@@ -7,6 +7,7 @@ import utils from "common/utils";
 import LinkToAccountById from "../Utility/LinkToAccountById";
 import LinkToAssetById from "../Utility/LinkToAssetById";
 import {ChainStore, ChainTypes as grapheneChainTypes} from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 // import account_constants from "chain/account_constants";
 const {operations} = grapheneChainTypes;
 import PropTypes from "prop-types";
@@ -16,7 +17,7 @@ import {Icon as AntIcon} from "bitshares-ui-style-guide";
 
 require("./operations.scss");
 
-let ops = Object.keys(operations);
+let ops = buildOperationNames(Object.keys(operations));
 // let listings = account_constants.account_listing;
 
 export const TransactionIDAndExpiry = ({

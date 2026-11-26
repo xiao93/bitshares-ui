@@ -11,6 +11,7 @@ import LinkToAssetById from "../Utility/LinkToAssetById";
 import BindToChainState from "../Utility/BindToChainState";
 import ChainTypes from "../Utility/ChainTypes";
 import {ChainStore, ChainTypes as grapheneChainTypes} from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 import {connect} from "alt-react";
 import SettingsStore from "stores/SettingsStore";
 import PropTypes from "prop-types";
@@ -20,7 +21,7 @@ const {operations} = grapheneChainTypes;
 import opComponents from "./operations";
 require("./operations.scss");
 
-let ops = Object.keys(operations);
+let ops = buildOperationNames(Object.keys(operations));
 // let listings = account_constants.account_listing;
 
 class TransactionLabel extends React.Component {

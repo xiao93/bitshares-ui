@@ -10,6 +10,7 @@ import utils from "common/utils";
 import ProposalModal, {finalRequiredPerms} from "../Modal/ProposalModal";
 import NestedApprovalState from "../Account/NestedApprovalState";
 import {ChainStore, ChainTypes as grapheneChainTypes} from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 import counterpart from "counterpart";
 import permission_utils from "common/permission_utils";
 import LinkToAccountById from "../Utility/LinkToAccountById";
@@ -19,7 +20,7 @@ import {Tooltip} from "bitshares-ui-style-guide";
 import JSONModal from "components/Modal/JSONModal";
 
 const {operations} = grapheneChainTypes;
-const ops = Object.keys(operations);
+const ops = buildOperationNames(Object.keys(operations));
 
 class Proposals extends Component {
     static propTypes = {

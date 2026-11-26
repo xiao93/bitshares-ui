@@ -8,6 +8,10 @@ import LinkToAssetById from "../Utility/LinkToAssetById";
 import BindToChainState from "../Utility/BindToChainState";
 import TranslateWithLinks from "../Utility/TranslateWithLinks";
 import {ChainTypes as grapheneChainTypes, ChainStore} from "bitsharesjs";
+import {
+    buildOperationNames,
+    liquidityPoolExchangeSummary
+} from "common/operationNames";
 import account_constants from "chain/account_constants";
 import MemoText from "./MemoText";
 import ProposedOperation from "./ProposedOperation";
@@ -45,7 +49,7 @@ class Operation {
 
     getColumn(op, current, block, result, marketDirections) {
         const {operations} = grapheneChainTypes;
-        let ops = Object.keys(operations);
+        let ops = buildOperationNames(Object.keys(operations));
         let listings = account_constants.account_listing;
         let column = null,
             color = "info";
@@ -1579,6 +1583,47 @@ class Operation {
                 );
 
                 break;
+            case "liquidity_pool_exchange": {
+                const summary = liquidityPoolExchangeSummary(op, result);
+                if (!summary) {
+                    column = (
+                        <span>
+                            <Link to={`/block/${block}`}>#{block}</Link>
+                        </span>
+                    );
+                    break;
+                }
+                color = "success";
+                column = (
+                    <span>
+                        <TranslateWithLinks
+                            string={summary.stringKey}
+                            keys={[
+                                {
+                                    type: "account",
+                                    value: summary.account,
+                                    arg: "account"
+                                },
+                                {
+                                    value: summary.pool,
+                                    arg: "id"
+                                },
+                                {
+                                    type: "amount",
+                                    value: summary.amountA,
+                                    arg: "amount_a"
+                                },
+                                {
+                                    type: "amount",
+                                    value: summary.amountB,
+                                    arg: "amount_b"
+                                }
+                            ]}
+                        />
+                    </span>
+                );
+                break;
+            }
             default:
                 console.log("unimplemented op '" + ops[op[0]] + "':", op);
                 column = (

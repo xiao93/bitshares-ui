@@ -10,6 +10,7 @@ import {
     FetchChain,
     ChainStore
 } from "bitsharesjs";
+import {buildOperationNames} from "common/operationNames";
 //import ps from "perfect-scrollbar";
 import counterpart from "counterpart";
 import Icon from "../Icon/Icon";
@@ -19,7 +20,7 @@ import PaginatedList from "../Utility/PaginatedList";
 const {operations} = grapheneChainTypes;
 import LoadingIndicator from "../LoadingIndicator";
 import {Tooltip, Modal, Button, Select, Input} from "bitshares-ui-style-guide";
-const ops = Object.keys(operations);
+const ops = buildOperationNames(Object.keys(operations));
 import {Link} from "react-router-dom";
 import FormattedAsset from "../Utility/FormattedAsset";
 import BlockTime from "../Blockchain/BlockTime";
